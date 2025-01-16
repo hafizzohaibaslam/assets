@@ -4,7 +4,7 @@ import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { TailSpin } from "react-loader-spinner";
 import { useNavigate } from "react-router-dom";
-
+import api from '../api/api'
 function LoginComponent() {
   const navigate = useNavigate();
   const [auth, setAuth] = useState({
@@ -18,42 +18,42 @@ function LoginComponent() {
     e.preventDefault();
     setLoader(true);
 
-    // try {
-    //   const res = await request.post("/auth/login", auth);
+    try {
+      const res = await api.post("/v1/auth/login", auth);
 
-    //   if (res.data.success) {
-    //     localStorage.setItem("token", res.data.token);
-    //     toast.success("User Login Successfully", {
-    //       position: "top-center",
-    //       autoClose: 2000,
-    //     });
+      if (res.data.success) {
+        localStorage.setItem("token", res.data.token);
+        toast.success("User Login Successfully", {
+          position: "top-center",
+          autoClose: 2000,
+        });
 
-    //     setTimeout(() => {
-    //       navigate("/addPatient");
-    //     }, 2000);
-    //   } else {
-    //     const errorMessage =
-    //       res?.data?.error || "Failed to login user. Please try again.";
+        setTimeout(() => {
+          navigate("/addPatient");
+        }, 2000);
+      } else {
+        const errorMessage =
+          res?.data?.error || "Failed to login user. Please try again.";
 
-    //     toast.error(errorMessage, {
-    //       position: "top-center",
-    //       autoClose: 3000,
-    //     });
-    //   }
-    // } catch (error) {
-    //   console.error("signin error", error);
+        toast.error(errorMessage, {
+          position: "top-center",
+          autoClose: 3000,
+        });
+      }
+    } catch (error) {
+      console.error("signin error", error);
 
-    //   const errorMessage =
-    //     error.response?.data?.message ||
-    //     "Failed to login user. Please try again.";
+      const errorMessage =
+        error.response?.data?.message ||
+        "Failed to login user. Please try again.";
 
-    //   toast.error(errorMessage, {
-    //     position: "top-center",
-    //     autoClose: 3000,
-    //   });
-    // } finally {
-    //   setLoader(false);
-    // }
+      toast.error(errorMessage, {
+        position: "top-center",
+        autoClose: 3000,
+      });
+    } finally {
+      setLoader(false);
+    }
   };
 
   return (

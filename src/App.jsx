@@ -10,7 +10,7 @@ import MainLayout from "./layouts/MainLayout";
 import Users from "./screens/Users";
 import Inventory from "./screens/Inventory";
 import Zones from "./screens/Zones";
-
+import OtpVerification from "./screens/VerifyOtp";
 // const PrivateRoute = ({ children }) => {
 //   const token = localStorage.getItem("token");
 //   return token ? children : <Navigate to="/" />;
@@ -27,6 +27,7 @@ function App() {
             <Route path="/" element={<Inventory />} />
           </Route>
           <Route path="/login" element={<Login />} />
+          <Route path="/verifyOtp" element={<OtpVerification />} />
         </Routes>
       </Router>
     </>

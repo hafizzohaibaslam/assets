@@ -1,7 +1,9 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Table, Tag, Button, Dropdown, Menu, Modal, Input } from "antd";
 import { DownOutlined, EditOutlined } from "@ant-design/icons";
 import Header from "../components/Header";
+import api from "../api/api";
+import { toast } from "react-toastify";
 
 const Inventory = () => {
   const [data, setData] = useState([
@@ -81,7 +83,7 @@ const Inventory = () => {
     setIsModalOpen(true);
   };
 
-  const handleSaveChanges = () => {
+  const handleSaveChanges = async(id) => {
     setData((prevData) =>
       prevData.map((item) =>
         item.key === editingDevice.key
@@ -91,7 +93,48 @@ const Inventory = () => {
     );
     setIsModalOpen(false);
     setEditingDevice(null);
+
+    ////////////edit device//////////////////
+
+    try{
+      const response = await  api.patch(`/v1/device/${id}`,{
+        name:editedDeviceName,
+      })
+      toast.success("Device Edited Successfully", {
+        position: "top-center",
+        autoClose: 2000,
+      });
+    }catch(error){
+      console.log("error",error);
+      const errorMessage =
+      error.response?.data?.message ||
+      "Failed to edit device. Please try again.";
+      toast.error(errorMessage, {
+        position: "top-center",
+        autoClose: 3000,
+      });
+      
+      toast.error(errorMessage, {
+        position: "top-center",
+        autoClose: 3000,
+      });
+    }
   };
+
+  const getAllDevices = async() =>{
+    try{
+      const response = await api.get("/v1/device/all");
+      if(response.data.success){
+        setData(response.data.devices);
+      }
+    }catch(error){
+      console.log("error in getting all devices",error)
+    }
+  }
+
+  useEffect(()=>{
+    getAllDevices()
+  },[])
 
   const columns = [
     {
@@ -145,6 +188,8 @@ const Inventory = () => {
       ),
     },
   ];
+
+
 
   return (
     <div className="p-6">

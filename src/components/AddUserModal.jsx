@@ -3,7 +3,7 @@ import { Button, Modal, Select, Input, Result } from "antd"; // Import Result
 
 const AddUserModal = ({ isModalOpen, setIsModalOpen, onSave }) => {
   const [formData, setFormData] = useState({
-    fullName: "",
+    name: "",
     email: "",
     role: "User",
   });
@@ -117,8 +117,7 @@ const AddUserModal = ({ isModalOpen, setIsModalOpen, onSave }) => {
             value={formData.role}
             onChange={handleSelectChange}
             options={[
-              { value: "Admin", label: "Admin" },
-              { value: "User", label: "User" },
+              { value: "technician", label: "Technician" },
             ]}
           />
         </div>

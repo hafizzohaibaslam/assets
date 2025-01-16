@@ -1,8 +1,10 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Table, Modal } from "antd";
 import AddUserModal from "../components/AddUserModal";
 import { DeleteOutlined } from "@ant-design/icons"; // Add this import
 import Header from "../components/Header";
+import api from "../api/api";
+import { toast } from "react-toastify";
 
 function Users() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -64,15 +66,55 @@ function Users() {
       ),
     },
   ];
-
+  
+ 
   // onSave handler to add a new user
-  const handleSave = (newUser) => {
+  const handleSave = async(newUser) => {
+    console.log(newUser);
+    
     setUsers((prevUsers) => [
       ...prevUsers,
       { key: prevUsers.length + 1, ...newUser },
     ]);
+    try{
+      const res = await api.post("/v1/user/create",newUser)
+
+      if (res.data.success) {
+        toast.success("User added Successfully", {
+          position: "top-center",
+          autoClose: 2000,
+        });
+      }
+    }catch(error){
+      console.error(" error", error);
+      const errorMessage =
+        error.response?.data?.message ||
+        "Failed to create user. Please try again.";
+      toast.error(errorMessage, {
+        position: "top-center",
+        autoClose: 3000,
+      });
+      toast.error(errorMessage, {
+        position: "top-center",
+        autoClose: 3000,
+      });
+    }
   };
 
+  const getAllUsers = async() =>{
+    try{
+      const response = await api.get("/v1/user/all");
+      if(response.data.success){
+        setUsers(response.data.users)
+      }
+    }catch(error){
+      console.log("error in getting all users",error)
+    }
+  }
+
+  useEffect(()=>{
+    getAllUsers()
+  },[])
   return (
     <>
       <div className="p-[34px]">

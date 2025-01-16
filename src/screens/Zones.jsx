@@ -1,5 +1,7 @@
 import React, { useRef, useState } from "react";
 import { Modal, Button, notification } from "antd";
+import api from "../api/api";
+import { toast } from "react-toastify";
 
 function Zones() {
   const canvasRef = useRef(null);
@@ -16,6 +18,7 @@ function Zones() {
     setCurrentZone({ x, y, width: 0, height: 0 });
     setDrawing(true);
   };
+console.log(zones);
 
   const draw = (e) => {
     if (!drawing) return;
@@ -53,6 +56,7 @@ function Zones() {
     setZoneName("");
     setCurrentZone(null);
     setIsModalVisible(false);
+    createZone()
   };
 
   const handleCancel = () => {
@@ -111,7 +115,36 @@ function Zones() {
   React.useEffect(() => {
     drawZones();
   }, [zones, currentZone]);
+  const createZone = async() =>{
+    try{
+      const payload = {
+        name: zoneName,
+        coordinates:zones
+      }
+      const response = api.post("/v1/zone/create",payload)
+      if (response.data.success) {
+        toast.success("Zone created Successfully", {
+          position: "top-center",
+          autoClose: 2000,
+        });
+      }
+    }catch(error){
+      const errorMessage =
+        error.response?.data?.message ||
+        "Failed to create user. Please try again.";
+      console.error(" error", error);
+      toast.error(errorMessage, {
+        position: "top-center",
+        autoClose: 3000,
+      });
 
+      toast.error(errorMessage, {
+        position: "top-center",
+        autoClose: 3000,
+      });
+    
+    }
+  }
   return (
     <div className="relative">
       <div className="absolute top-4 left-4">
