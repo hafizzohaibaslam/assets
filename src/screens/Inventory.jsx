@@ -83,7 +83,7 @@ const Inventory = () => {
     setIsModalOpen(true);
   };
 
-  const handleSaveChanges = async(id) => {
+  const handleSaveChanges = async (id) => {
     setData((prevData) =>
       prevData.map((item) =>
         item.key === editingDevice.key
@@ -96,24 +96,24 @@ const Inventory = () => {
 
     ////////////edit device//////////////////
 
-    try{
-      const response = await  api.patch(`/v1/device/${id}`,{
-        name:editedDeviceName,
-      })
+    try {
+      const response = await api.patch(`/v1/device/${id}`, {
+        name: editedDeviceName,
+      });
       toast.success("Device Edited Successfully", {
         position: "top-center",
         autoClose: 2000,
       });
-    }catch(error){
-      console.log("error",error);
+    } catch (error) {
+      console.log("error", error);
       const errorMessage =
-      error.response?.data?.message ||
-      "Failed to edit device. Please try again.";
+        error.response?.data?.message ||
+        "Failed to edit device. Please try again.";
       toast.error(errorMessage, {
         position: "top-center",
         autoClose: 3000,
       });
-      
+
       toast.error(errorMessage, {
         position: "top-center",
         autoClose: 3000,
@@ -121,20 +121,20 @@ const Inventory = () => {
     }
   };
 
-  const getAllDevices = async() =>{
-    try{
+  const getAllDevices = async () => {
+    try {
       const response = await api.get("/v1/device/all");
-      if(response.data.success){
+      if (response.data.success) {
         setData(response.data.devices);
       }
-    }catch(error){
-      console.log("error in getting all devices",error)
+    } catch (error) {
+      console.log("error in getting all devices", error);
     }
-  }
+  };
 
-  useEffect(()=>{
-    getAllDevices()
-  },[])
+  useEffect(() => {
+    getAllDevices();
+  }, []);
 
   const columns = [
     {
@@ -188,8 +188,6 @@ const Inventory = () => {
       ),
     },
   ];
-
-
 
   return (
     <div className="p-6">
