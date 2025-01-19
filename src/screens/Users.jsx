@@ -4,88 +4,87 @@ import AddUserModal from "../components/AddUserModal";
 import { DeleteOutlined } from "@ant-design/icons"; // Add this import
 import Header from "../components/Header";
 import api from "../api/api";
-import { toast } from "react-toastify";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import { useRole } from "../utils/token";
+import { Audio, Grid } from 'react-loader-spinner'
 
 function Users() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState(null);
-
-  // Initialize users state
-  const [users, setUsers] = useState([
-    // Existing users can be listed here
-    // Example:
-    // { key: '1', fullName: 'John Doe', email: 'john@example.com', role: 'Admin' },
-  ]);
-
-  const handleDelete = (key) => {
-    setUserToDelete(key);
-    setIsDeleteModalOpen(true);
-  };
-
-  // Handler to confirm deletion
-  const confirmDelete = () => {
-    setUsers((prevUsers) =>
-      prevUsers.filter((user) => user.key !== userToDelete)
-    );
-    setIsDeleteModalOpen(false);
-    setUserToDelete(null);
-  };
-
-  // Handler to cancel deletion
-  const cancelDelete = () => {
-    setIsDeleteModalOpen(false);
-    setUserToDelete(null);
-  };
-
-  // Define columns for the table
-  const columns = [
-    {
-      title: "Full Name",
-      dataIndex: "fullName",
-      key: "fullName",
-    },
-    {
-      title: "Email Address",
-      dataIndex: "email",
-      key: "email",
-    },
-    {
-      title: "Role",
-      dataIndex: "role",
-      key: "role",
-    },
+  const [users, setUsers] = useState([ ]);
+  const [loading,setLoading] = useState(false)
+  const role = useRole()
+ const columns = [
+  {
+    title: "Full Name",
+    dataIndex: "name",
+    key: "name",
+  },
+  {
+    title: "Email Address",
+    dataIndex: "email",
+    key: "email",
+  },
+  {
+    title: "Created At",
+    dataIndex: "createdAt",
+    key: "createdAt",
+    render: (text) => new Date(text).toLocaleDateString(),
+  },
+  ...(role === "admin" ? [
     {
       title: "Action",
       key: "action",
       render: (text, record) => (
         <DeleteOutlined
           style={{ color: "red", cursor: "pointer" }}
-          onClick={() => handleDelete(record.key)}
+          onClick={() => handleDelete(record.id)}
         />
       ),
     },
-  ];
-  
+  ] : []), 
+];
  
-  // onSave handler to add a new user
+  // Handler to confirm deletion
+  const confirmDelete = async() => {
+        try{
+          const response = await api.delete(`/v1/user/${userToDelete}`)
+          toast.success("User deleted successfully", {
+            position: "top-center",
+            autoClose: 2000,
+          });
+          setUsers((prevUsers) =>
+            prevUsers.filter((user) => user.key !== userToDelete)
+          );
+          getAllUsers()
+        }catch(error){
+          console.error(" error", error);
+          const errorMessage =
+            error.response?.data?.message ||
+            "Failed to delete user. Please try again.";
+          toast.error(errorMessage, {
+            position: "top-center",
+            autoClose: 3000,
+          });
+        }finally{
+          setIsDeleteModalOpen(false);
+        }
+  };
+
   const handleSave = async(newUser) => {
-    console.log(newUser);
-    
-    setUsers((prevUsers) => [
-      ...prevUsers,
-      { key: prevUsers.length + 1, ...newUser },
-    ]);
     try{
       const res = await api.post("/v1/user/create",newUser)
-
       if (res.data.success) {
         toast.success("User added Successfully", {
           position: "top-center",
           autoClose: 2000,
         });
+        setUsers((prevUsers) => [...prevUsers, res.data.user]);
+        getAllUsers()
       }
-    }catch(error){
+    } catch (error) {
       console.error(" error", error);
       const errorMessage =
         error.response?.data?.message ||
@@ -94,27 +93,38 @@ function Users() {
         position: "top-center",
         autoClose: 3000,
       });
-      toast.error(errorMessage, {
-        position: "top-center",
-        autoClose: 3000,
-      });
+   
     }
   };
 
   const getAllUsers = async() =>{
+    setLoading(true)
     try{
       const response = await api.get("/v1/user/all");
       if(response.data.success){
-        setUsers(response.data.users)
+        setUsers(response.data.users.map(user => ({ ...user, key: user.id })));
       }
+      setLoading(false)
     }catch(error){
       console.log("error in getting all users",error)
+      setLoading(false)
     }
   }
+  
+  const cancelDelete = () => {
+    setIsDeleteModalOpen(false);
+    setUserToDelete(null);
+  };
+
+  const handleDelete = (id) => {
+    setUserToDelete(id);
+    setIsDeleteModalOpen(true);
+  }; 
 
   useEffect(()=>{
     getAllUsers()
   },[])
+  
   return (
     <>
       <div className="p-[34px]">
@@ -124,9 +134,16 @@ function Users() {
           setIsModalOpen={setIsModalOpen}
           add="Add User"
         />
-        <div className="bg-white mt-5">
-          <Table dataSource={users} columns={columns} />
-        </div>
+   <div className="bg-white mt-5 overflow-x-auto flex w-full items-center justify-center min-h-[22rem]">
+      {loading ? (
+        <Grid color="#605bff"/>
+      ) : (
+       <div className="w-full">
+         <Table dataSource={users} columns={columns} />
+       </div>
+      )}
+</div>
+
       </div>
 
       {/* Pass onSave handler to AddUserModal */}
@@ -170,8 +187,10 @@ function Users() {
           >
             Cancel
           </button>
+          <ToastContainer />
         </div>
       </Modal>
+      <ToastContainer />
     </>
   );
 }

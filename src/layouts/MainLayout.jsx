@@ -7,7 +7,7 @@ const MainLayout = ({ children }) => {
   const [open, setOpen] = useState(false);
 
   return (
-    <div className="bg-[#fafbff] flex justify-start items-start max-w-[100vw]">
+    <div className="bg-[#fafbff] h-[100vh] flex justify-start items-start max-w-[100vw]">
       <div
         className={`h-[100vh] ${
           open ? "z-10 bg-white w-[50%] sidebar-open" : "hidden"

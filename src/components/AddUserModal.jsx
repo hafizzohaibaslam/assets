@@ -2,13 +2,12 @@ import React, { useState } from "react";
 import { Button, Modal, Select, Input, Result } from "antd"; // Import Result
 
 const AddUserModal = ({ isModalOpen, setIsModalOpen, onSave }) => {
+  const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false); // Add success modal state
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     role: "User",
   });
-
-  const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false); // Add success modal state
 
   const handleInputChange = (e) => {
     const { id, value } = e.target;
@@ -21,15 +20,14 @@ const AddUserModal = ({ isModalOpen, setIsModalOpen, onSave }) => {
 
   const handleOk = () => {
     if (onSave) {
-      onSave(formData); // Pass the form data back to the parent component
+      onSave(formData); 
     }
     setIsModalOpen(false);
-    setIsSuccessModalOpen(true); // Open success modal
-    // Reset form data after saving
+    setIsSuccessModalOpen(true); 
     setFormData({
-      fullName: "",
+      name: "",
       email: "",
-      role: "User",
+      role: "Technician",
     });
   };
 
@@ -47,6 +45,7 @@ const AddUserModal = ({ isModalOpen, setIsModalOpen, onSave }) => {
         title="Add User"
         open={isModalOpen}
         onOk={handleOk}
+        onCancel={handleCancel}
         footer={[
           <Button
             key="submit"
@@ -72,17 +71,17 @@ const AddUserModal = ({ isModalOpen, setIsModalOpen, onSave }) => {
           </p>
 
           <label
-            htmlFor="fullName"
+            htmlFor="name"
             className="font-[500] text-[14px] leading-[20px] pb-[8px] block"
           >
             Full Name
           </label>
           <Input
             className="w-full text-[16px] p-[14px_16px] text-[#6B7280] border border-[#ECECEC] rounded-[12px] focus:border-primary outline-none transition-all"
-            id="fullName"
+            id="name"
             type="text"
             placeholder="Enter full name"
-            value={formData.fullName}
+            value={formData.name}
             onChange={handleInputChange}
           />
         </div>
@@ -124,7 +123,7 @@ const AddUserModal = ({ isModalOpen, setIsModalOpen, onSave }) => {
       </Modal>
 
       {/* Success Modal */}
-      <Modal
+      {/* <Modal
         open={isSuccessModalOpen}
         footer={null}
         onCancel={handleSuccessOk}
@@ -140,7 +139,7 @@ const AddUserModal = ({ isModalOpen, setIsModalOpen, onSave }) => {
             </Button>,
           ]}
         />
-      </Modal>
+      </Modal> */}
     </>
   );
 };

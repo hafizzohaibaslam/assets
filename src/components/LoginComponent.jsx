@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react";
-// import request from "../utils/request";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { TailSpin } from "react-loader-spinner";
@@ -8,52 +7,47 @@ import api from '../api/api'
 function LoginComponent() {
   const navigate = useNavigate();
   const [auth, setAuth] = useState({
-    login: "",
+    email: "",
     password: "",
   });
-
+  
   const [loader, setLoader] = useState(false);
-
+  
   const onSubmit = async (e) => {
     e.preventDefault();
     setLoader(true);
-
     try {
       const res = await api.post("/v1/auth/login", auth);
 
       if (res.data.success) {
         localStorage.setItem("token", res.data.token);
+        localStorage.setItem("role", res.data.user.userRole);
         toast.success("User Login Successfully", {
           position: "top-center",
           autoClose: 2000,
         });
 
         setTimeout(() => {
-          navigate("/addPatient");
-        }, 2000);
+          navigate("/");
+        }, 3000);
       } else {
         const errorMessage =
-          res?.data?.error || "Failed to login user. Please try again.";
-
+          res?.data?.message || "Failed to login user. Please try again.";
         toast.error(errorMessage, {
           position: "top-center",
           autoClose: 3000,
         });
       }
+     
+      setLoader(false);
     } catch (error) {
-      console.error("signin error", error);
-
-      const errorMessage =
-        error.response?.data?.message ||
-        "Failed to login user. Please try again.";
-
-      toast.error(errorMessage, {
+      toast.error( error?.response?.data?.message || "Failed to login user. Please try again." , {
         position: "top-center",
         autoClose: 3000,
       });
-    } finally {
+      console.error("signin error", error);
       setLoader(false);
-    }
+    } 
   };
 
   return (
@@ -87,8 +81,8 @@ function LoginComponent() {
                   id="login"
                   type="text"
                   placeholder="name@email.com"
-                  value={auth.login}
-                  onChange={(e) => setAuth({ ...auth, login: e.target.value })}
+                  value={auth.email}
+                  onChange={(e) => setAuth({ ...auth, email: e.target.value })}
                 />
               </div>
 

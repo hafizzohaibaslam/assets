@@ -1,7 +1,8 @@
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import { Modal, Button, notification } from "antd";
 import api from "../api/api";
-import { toast } from "react-toastify";
+import { toast, ToastContainer } from "react-toastify";
+import { useRole } from "../utils/token";
 
 function Zones() {
   const canvasRef = useRef(null);
@@ -10,6 +11,7 @@ function Zones() {
   const [currentZone, setCurrentZone] = useState(null);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [zoneName, setZoneName] = useState("");
+  const role = useRole();
 
   const startDrawing = (e) => {
     const rect = canvasRef.current.getBoundingClientRect();
@@ -18,7 +20,6 @@ function Zones() {
     setCurrentZone({ x, y, width: 0, height: 0 });
     setDrawing(true);
   };
-console.log(zones);
 
   const draw = (e) => {
     if (!drawing) return;
@@ -42,21 +43,20 @@ console.log(zones);
         description:
           "This zone overlaps with an existing zone. Please select another area.",
       });
-      setCurrentZone(null); // Reset the current zone
+      setCurrentZone(null); 
       return;
     }
-
-    setIsModalVisible(true); // Show modal for naming the zone
+    setIsModalVisible(true); 
   };
 
-  const handleOk = () => {
+  const handleOk = async () => {
     if (zoneName) {
-      setZones([...zones, { ...currentZone, name: zoneName }]);
+      setZones((prevZones) => [...prevZones, { ...currentZone, name: zoneName }]);
     }
     setZoneName("");
     setCurrentZone(null);
     setIsModalVisible(false);
-    createZone()
+    await createZone();
   };
 
   const handleCancel = () => {
@@ -68,12 +68,10 @@ console.log(zones);
   const isOverlapping = (newZone) => {
     return zones.some((zone) => {
       return !(
-        (
-          newZone.x + newZone.width <= zone.x || // New zone is to the left
-          newZone.x >= zone.x + zone.width || // New zone is to the right
-          newZone.y + newZone.height <= zone.y || // New zone is above
-          newZone.y >= zone.y + zone.height
-        ) // New zone is below
+        newZone.x + newZone.width <= zone.x ||
+        newZone.x >= zone.x + zone.width ||
+        newZone.y + newZone.height <= zone.y ||
+        newZone.y >= zone.y + zone.height
       );
     });
   };
@@ -82,7 +80,6 @@ console.log(zones);
     const ctx = canvasRef.current.getContext("2d");
     ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
 
-    // Redraw all saved zones
     zones.forEach((zone) => {
       ctx.fillStyle = "rgba(0, 0, 255, 0.5)";
       ctx.fillRect(zone.x, zone.y, zone.width, zone.height);
@@ -93,64 +90,80 @@ console.log(zones);
       ctx.fillText(zone.name, zone.x + 5, zone.y + 20);
     });
 
-    // Draw current zone if in progress
     if (currentZone) {
       ctx.fillStyle = "rgba(0, 0, 255, 0.3)";
-      ctx.fillRect(
-        currentZone.x,
-        currentZone.y,
-        currentZone.width,
-        currentZone.height
-      );
+      ctx.fillRect(currentZone.x, currentZone.y, currentZone.width, currentZone.height);
       ctx.strokeStyle = "blue";
-      ctx.strokeRect(
-        currentZone.x,
-        currentZone.y,
-        currentZone.width,
-        currentZone.height
-      );
+      ctx.strokeRect(currentZone.x, currentZone.y, currentZone.width, currentZone.height);
     }
   };
 
-  React.useEffect(() => {
-    drawZones();
-  }, [zones, currentZone]);
-  const createZone = async() =>{
-    try{
+  const transformToCoordinates = (zone) => {
+    const canvasWidth = canvasRef.current.width;
+    const canvasHeight = canvasRef.current.height;
+
+    const mapXToLongitude = (x) => {
+      const minLongitude = -74.0;
+      const maxLongitude = -73.9;
+      return minLongitude + (x / canvasWidth) * (maxLongitude - minLongitude);
+    };
+
+    const mapYToLatitude = (y) => {
+      const minLatitude = 40.76;
+      const maxLatitude = 40.77;
+      return maxLatitude - (y / canvasHeight) * (maxLatitude - minLatitude);
+    };
+
+    const { x, y, width, height } = zone;
+
+    return [
+      [mapXToLongitude(x), mapYToLatitude(y)],
+      [mapXToLongitude(x), mapYToLatitude(y + height)],
+      [mapXToLongitude(x + width), mapYToLatitude(y + height)],
+      [mapXToLongitude(x + width), mapYToLatitude(y)],
+      [mapXToLongitude(x), mapYToLatitude(y)],
+    ];
+  };
+
+  const createZone = async () => {
+    try {
+      const formattedCoordinates = zones.map((zone) => transformToCoordinates(zone));
       const payload = {
         name: zoneName,
-        coordinates:zones
-      }
-      const response = api.post("/v1/zone/create",payload)
+        coordinates: formattedCoordinates[formattedCoordinates.length - 1],
+      };
+      
+      const response = await api.post("/v1/zone/create", payload);
+
       if (response.data.success) {
-        toast.success("Zone created Successfully", {
+        toast.success("Zone created successfully", {
           position: "top-center",
           autoClose: 2000,
         });
       }
-    }catch(error){
+    } catch (error) {
       const errorMessage =
-        error.response?.data?.message ||
-        "Failed to create user. Please try again.";
-      console.error(" error", error);
+        error.response?.data?.message || "Failed to create zone. Please try again.";
+      console.error(error);
       toast.error(errorMessage, {
         position: "top-center",
         autoClose: 3000,
       });
-
-      toast.error(errorMessage, {
-        position: "top-center",
-        autoClose: 3000,
-      });
-    
     }
-  }
+  };
+
+  useEffect(() => {
+    drawZones();
+  }, [zones, currentZone]);
+
   return (
     <div className="relative">
       <div className="absolute top-4 left-4">
-        <Button type="primary" onClick={() => alert("Select Area")}>
-          Select Area
-        </Button>
+        {role === "admin" ? (
+          <Button type="primary" onClick={() => alert("Select Area")}>
+            Select Area
+          </Button>
+        ) : null}
       </div>
       <canvas
         ref={canvasRef}
@@ -164,7 +177,7 @@ console.log(zones);
           backgroundRepeat: "no-repeat",
           backgroundPosition: "center",
         }}
-        onMouseDown={startDrawing}
+        onMouseDown={role === "admin" ? startDrawing : null}
         onMouseMove={draw}
         onMouseUp={stopDrawing}
       ></canvas>
@@ -183,6 +196,7 @@ console.log(zones);
           className="w-full p-2 border rounded"
         />
       </Modal>
+      <ToastContainer />
     </div>
   );
 }
